@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Singing Craft | Voice coaching for singers who care about the craft.</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for in-browser JSX transformation (Easiest for static hosting without a build step) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        h1, h2, h3, h4, .serif {
+            font-family: 'Cormorant Garamond', serif;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F7F1E7;
+            color: #2E2923;
+        }
+        .parchment-texture {
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+        }
+        .line-motif {
+            background: linear-gradient(to right, transparent, #B08A4A44, transparent);
+            height: 1px;
+            width: 100%;
+        }
+        .selection-highlight::selection {
+            background-color: rgba(176, 138, 74, 0.2);
+        }
+    </style>
+</head>
+<body class="selection-highlight">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, createElement } = React;
+        
+        /**
+         * Refined Icon component to fix destructuring errors.
+         * Explicitly checks if the data structure is an array before attempting to read icon parts.
+         */
+        const Icon = ({ name, size = 24, className = "", strokeWidth = 2 }) => {
+            const [iconData, setIconData] = useState(null);
+
+            useEffect(() => {
+                const checkLucide = setInterval(() => {
+                    if (window.lucide && window.lucide.icons) {
+                        const data = window.lucide.icons[name];
+                        if (data && Array.isArray(data)) {
+                            setIconData(data);
+                            clearInterval(checkLucide);
+                        }
+                    }
+                }, 50);
+                return () => clearInterval(checkLucide);
+            }, [name]);
+
+            if (!iconData || !Array.isArray(iconData)) {
+                return <span style={{ width: size, height: size, display: 'inline-block' }} className={className}></span>;
+            }
+
+            // iconData structure: [tag, {attrs}, [[childTag, {childAttrs}], ...]]
+            const tag = iconData[0];
+            const attrs = iconData[1];
+            const children = iconData[2];
+
+            return createElement(
+                'svg',
+                {
+                    xmlns: 'http://www.w3.org/2000/svg',
+                    width: size,
+                    height: size,
+                    viewBox: '0 0 24 24',
+                    fill: 'none',
+                    stroke: 'currentColor',
+                    strokeWidth: strokeWidth,
+                    strokeLinecap: 'round',
+                    strokeLinejoin: 'round',
+                    className: className,
+                    ...attrs
+                },
+                (children || []).map((child, index) => {
+                    if (!Array.isArray(child)) return null;
+                    const childTag = child[0];
+                    const childAttrs = child[1];
+                    return createElement(childTag, { ...childAttrs, key: index });
+                })
+            );
+        };
+
+        const App = () => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [formStatus, setFormStatus] = useState(null);
+
+            const colors = {
+                bg: '#F7F1E7',
+                primary: '#2E2923',
+                secondary: '#5F554C',
+                accent: '#8A5A3C',
+                green: '#2F4A3A',
+                brass: '#B08A4A',
+            };
+
+            const navLinks = [
+                { name: 'Home', id: 'home' },
+                { name: 'About', id: 'about' },
+                { name: 'Services', id: 'services' },
+                { name: 'Contact', id: 'contact' },
+            ];
+
+            const scrollTo = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    const offset = 80;
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                }
+                setIsMenuOpen(false);
+            };
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setFormStatus('sending');
+                setTimeout(() => {
+                    setFormStatus('success');
+                    e.target.reset();
+                }, 1500);
+            };
+
+            return (
+                <div className="min-h-screen">
+                    {/* Navigation */}
+                    <nav className="fixed top-0 w-full z-50 border-b border-[#2E2923]/10 bg-[#F7F1E7]/90 backdrop-blur-md">
+                        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                            <div className="flex flex-col cursor-pointer" onClick={() => scrollTo('home')}>
+                                <span className="serif text-2xl font-bold tracking-tight leading-none">The Singing Craft</span>
+                                <span className="text-[10px] uppercase tracking-[0.2em] text-[#8A5A3C] font-medium">Voice Studio</span>
+                            </div>
+
+                            <div className="hidden md:flex items-center space-x-10">
+                                {navLinks.map((link) => (
+                                    <button key={link.id} onClick={() => scrollTo(link.id)} className="text-sm font-medium hover:text-[#8A5A3C] transition-colors">
+                                        {link.name}
+                                    </button>
+                                ))}
+                                <button onClick={() => scrollTo('contact')} className="bg-[#2E2923] text-[#F7F1E7] px-6 py-2.5 rounded-sm text-sm font-medium hover:bg-[#8A5A3C] transition-all">
+                                    Schedule
+                                </button>
+                            </div>
+
+                            <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                                <Icon name={isMenuOpen ? "X" : "Menu"} />
+                            </button>
+                        </div>
+
+                        {isMenuOpen && (
+                            <div className="md:hidden bg-[#F7F1E7] border-b border-[#2E2923]/10 px-6 py-8 flex flex-col space-y-6">
+                                {navLinks.map((link) => (
+                                    <button key={link.id} onClick={() => scrollTo(link.id)} className="text-lg serif font-medium text-left">
+                                        {link.name}
+                                    </button>
+                                ))}
+                                <button onClick={() => scrollTo('contact')} className="bg-[#2E2923] text-[#F7F1E7] px-6 py-3 rounded-sm text-center font-medium">
+                                    Schedule a Lesson
+                                </button>
+                            </div>
+                        )}
+                    </nav>
+
+                    {/* Hero Section */}
+                    <section id="home" className="pt-40 pb-24 px-6 parchment-texture">
+                        <div className="max-w-4xl mx-auto text-center">
+                            <div className="inline-block mb-6">
+                                <div className="line-motif mb-2"></div>
+                                <span className="text-xs uppercase tracking-[0.3em] text-[#8A5A3C] font-semibold">Greater Seattle Area</span>
+                                <div className="line-motif mt-2"></div>
+                            </div>
+                            <h1 className="text-5xl md:text-7xl serif font-medium mb-8 leading-[1.1]">
+                                Voice coaching for singers who care about the craft.
+                            </h1>
+                            <p className="text-lg md:text-xl text-[#5F554C] max-w-2xl mx-auto mb-12 leading-relaxed">
+                                The Singing Craft offers warm, practical, high-level voice lessons and ensemble coaching with Jake Bailey — serving barbershop singers, developing vocalists, quartets, and choruses.
+                            </p>
+                            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                                <button onClick={() => scrollTo('contact')} className="w-full sm:w-auto bg-[#2F4A3A] text-white px-8 py-4 rounded-sm flex items-center justify-center gap-2 hover:bg-[#2F4A3A]/90 transition-all shadow-sm">
+                                    <Icon name="Calendar" size={18} /> Schedule a Lesson
+                                </button>
+                                <button onClick={() => scrollTo('services')} className="w-full sm:w-auto border border-[#2E2923]/20 px-8 py-4 rounded-sm hover:bg-[#2E2923]/5 transition-all">
+                                    Explore Services
+                                </button>
+                            </div>
+                            
+                            {/* Detailed Music Staff SVG */}
+                            <div className="mt-20 opacity-40 flex justify-center">
+                                <svg width="140" height="60" viewBox="0 0 140 60" fill="none" stroke="#2E2923">
+                                    <path d="M10 10H130M10 20H130M10 30H130M10 40H130M10 50H130" strokeWidth="0.5" strokeLinecap="round"/>
+                                    <path d="M22 52C16 52 14 44 14 41C14 36 21 32 25 30C29 28 32 25 32 18C32 5 24 2 24 10C24 18 24 40 24 54C24 58 20 58 18 56" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                                    <path d="M42 8V22M46 8V22M40 12H48M40 18H48" strokeWidth="0.8" strokeLinecap="round"/>
+                                    <path d="M58 12L54 22H60M58 12V26" strokeWidth="1" strokeLinecap="round"/>
+                                    <path d="M58 32L54 42H60M58 32V46" strokeWidth="1" strokeLinecap="round"/>
+                                    <circle cx="85" cy="40" r="3.5" fill="#2E2923" />
+                                    <path d="M88.5 40V15" strokeWidth="1" strokeLinecap="round"/>
+                                    <circle cx="105" cy="20" r="3.5" fill="#2E2923" />
+                                    <circle cx="118" cy="30" r="3.5" fill="#2E2923" />
+                                    <path d="M108.5 20V5" strokeWidth="1" strokeLinecap="round"/>
+                                    <path d="M121.5 30V15" strokeWidth="1" strokeLinecap="round"/>
+                                    <path d="M108.5 5L121.5 15" strokeWidth="2" strokeLinecap="round"/>
+                                    <path d="M130 10V50" strokeWidth="0.5" strokeLinecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Intro Section */}
+                    <section className="py-24 px-6 bg-white/40">
+                        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+                            <div>
+                                <h2 className="text-4xl md:text-5xl serif mb-8">Singing is a craft.<br/>Let’s build it with care.</h2>
+                                <div className="space-y-6 text-[#5F554C] text-lg leading-relaxed">
+                                    <p>Singing well is not magic. It is shaped through attention, practice, patience, and good guidance.</p>
+                                    <p>At The Singing Craft, Jake Bailey helps singers develop practical vocal tools they can understand and use. Whether you are an active barbershop singer, a newer vocalist, a quartet member, or part of a chorus, coaching is focused on helping you sing with more freedom, clarity, confidence, and musical intention.</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-[#8A5A3C]/5 aspect-[4/5] rounded-sm border border-[#8A5A3C]/10 flex items-center justify-center p-8 text-center italic serif text-xl text-[#8A5A3C]">
+                                    "Good singing is good singing."
+                                </div>
+                                <div className="bg-[#2F4A3A]/5 aspect-[4/5] rounded-sm border border-[#2F4A3A]/10 mt-8 flex flex-col items-center justify-center p-8 text-center">
+                                    <Icon name="Music" className="mb-4 text-[#2F4A3A]" size={32} strokeWidth={1}/>
+                                    <span className="text-sm font-medium tracking-wide uppercase text-[#2F4A3A]">Practical Tools</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Services */}
+                    <section id="services" className="py-24 px-6 bg-[#2E2923] text-[#F7F1E7]">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="text-center mb-16">
+                                <h2 className="text-4xl md:text-5xl serif mb-4">Ways to work together</h2>
+                                <p className="text-[#F7F1E7]/60">Professional coaching tailored to your specific musical goals.</p>
+                            </div>
+                            <div className="grid lg:grid-cols-3 gap-10">
+                                <div className="bg-white/5 p-10 border border-white/10 rounded-sm flex flex-col">
+                                    <Icon name="Mic2" className="mb-6 text-[#B08A4A]" size={36} strokeWidth={1} />
+                                    <h3 className="text-3xl serif mb-4">Private Voice Instruction</h3>
+                                    <p className="text-[#F7F1E7]/70 mb-8 flex-grow">One-on-one lessons for barbershop singers and developing vocalists who want a freer, more reliable, more expressive voice.</p>
+                                    <button onClick={() => scrollTo('contact')} className="w-full py-4 border border-[#B08A4A] text-[#B08A4A] hover:bg-[#B08A4A] hover:text-[#2E2923] transition-all rounded-sm font-medium">Learn about lessons</button>
+                                </div>
+                                <div className="bg-white/5 p-10 border border-white/10 rounded-sm flex flex-col">
+                                    <Icon name="Users2" className="mb-6 text-[#B08A4A]" size={36} strokeWidth={1} />
+                                    <h3 className="text-3xl serif mb-4">Quartet Coaching</h3>
+                                    <p className="text-[#F7F1E7]/70 mb-8 flex-grow">Coaching for quartets looking to sing with greater freedom, unity, tuning, blend, and musical clarity.</p>
+                                    <button onClick={() => scrollTo('contact')} className="w-full py-4 border border-[#B08A4A] text-[#B08A4A] hover:bg-[#B08A4A] hover:text-[#2E2923] transition-all rounded-sm font-medium">Learn about quartets</button>
+                                </div>
+                                <div className="bg-white/5 p-10 border border-white/10 rounded-sm flex flex-col">
+                                    <Icon name="Users" className="mb-6 text-[#B08A4A]" size={36} strokeWidth={1} />
+                                    <h3 className="text-3xl serif mb-4">Chorus Coaching</h3>
+                                    <p className="text-[#F7F1E7]/70 mb-8 flex-grow">Coaching for choruses seeking a more unified, resonant, and expressive ensemble sound.</p>
+                                    <button onClick={() => scrollTo('contact')} className="w-full py-4 border border-[#B08A4A] text-[#B08A4A] hover:bg-[#B08A4A] hover:text-[#2E2923] transition-all rounded-sm font-medium">Learn about choruses</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* About Jake */}
+                    <section id="about" className="py-24 px-6 parchment-texture">
+                        <div className="max-w-7xl mx-auto">
+                            <div className="grid md:grid-cols-12 gap-16 items-start">
+                                <div className="md:col-span-5">
+                                    <div className="aspect-[4/5] bg-[#2E2923]/5 border border-[#2E2923]/10 flex items-center justify-center italic text-[#5F554C]/40">
+                                        [ Placeholder for Jake Bailey Headshot ]
+                                    </div>
+                                </div>
+                                <div className="md:col-span-7">
+                                    <h2 className="text-4xl md:text-5xl serif mb-8">Meet Jake Bailey</h2>
+                                    <div className="space-y-6 text-[#5F554C] text-lg leading-relaxed mb-10">
+                                        <p>Jake Bailey is a Seattle-area vocalist, coach, and Assistant Musical Director specializing in practical vocal instruction for barbershop singers, developing vocalists, quartets, and choruses.</p>
+                                        <p>His background spans choral singing, barbershop, and a cappella, including gold medals with the Masters of Harmony and the Westminster Chorus.</p>
+                                    </div>
+                                    <div className="bg-[#2F4A3A]/5 p-8 border-l-4 border-[#2F4A3A] rounded-r-sm">
+                                        <h4 className="serif text-2xl mb-4 text-[#2F4A3A]">Selected Experience</h4>
+                                        <ul className="space-y-4 text-sm text-[#5F554C]">
+                                            <li>• Assistant Musical Director, Northwest Sound</li>
+                                            <li>• Singer, Top Spin Quartet</li>
+                                            <li>• BHS International Chorus Gold Medalist</li>
+                                            <li>• Choir of the World, Westminster Chorus</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Contact Form */}
+                    <section id="contact" className="py-24 px-6 parchment-texture border-t border-[#2E2923]/10">
+                        <div className="max-w-3xl mx-auto bg-white p-12 border border-[#2E2923]/10 rounded-sm shadow-sm">
+                            <h2 className="text-4xl serif mb-6 text-center">Contact Jake</h2>
+                            {formStatus === 'success' ? (
+                                <div className="text-center py-12">
+                                    <Icon name="CheckCircle2" size={48} className="text-[#2F4A3A] mx-auto mb-6" />
+                                    <h3 className="text-2xl serif mb-4">Inquiry Received</h3>
+                                    <p className="text-[#5F554C]">Thank you for reaching out. Jake will get back to you soon.</p>
+                                    <button onClick={() => setFormStatus(null)} className="mt-8 text-sm font-semibold text-[#8A5A3C] uppercase tracking-widest underline">Send another message</button>
+                                </div>
+                            ) : (
+                                <form onSubmit={handleSubmit} className="space-y-6">
+                                    <div className="grid md:grid-cols-2 gap-6">
+                                        <input required type="text" placeholder="Full Name" className="w-full bg-[#F7F1E7]/50 border border-[#2E2923]/10 px-4 py-3 rounded-sm focus:outline-none focus:border-[#8A5A3C]" />
+                                        <input required type="email" placeholder="Email Address" className="w-full bg-[#F7F1E7]/50 border border-[#2E2923]/10 px-4 py-3 rounded-sm focus:outline-none focus:border-[#8A5A3C]" />
+                                    </div>
+                                    <select className="w-full bg-[#F7F1E7]/50 border border-[#2E2923]/10 px-4 py-3 rounded-sm focus:outline-none">
+                                        <option>Private Voice Instruction</option>
+                                        <option>Quartet Coaching</option>
+                                        <option>Chorus Coaching</option>
+                                        <option>General Inquiry</option>
+                                    </select>
+                                    <textarea required rows={4} placeholder="Your Message" className="w-full bg-[#F7F1E7]/50 border border-[#2E2923]/10 px-4 py-3 rounded-sm focus:outline-none focus:border-[#8A5A3C] resize-none"></textarea>
+                                    <button className="w-full bg-[#2E2923] text-white py-4 rounded-sm font-semibold hover:bg-[#8A5A3C] transition-all">
+                                        Send Inquiry
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                    </section>
+
+                    <footer className="py-20 px-6 border-t border-[#2E2923]/10 text-center">
+                        <div className="flex flex-col mb-4 items-center">
+                            <span className="serif text-2xl font-bold tracking-tight">The Singing Craft</span>
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-[#8A5A3C] font-medium">Voice Studio</span>
+                        </div>
+                        <p className="text-xs text-[#5F554C]/60 uppercase tracking-widest mt-8">© {new Date().getFullYear()} The Singing Craft Voice Studio. Seattle Area, WA.</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
